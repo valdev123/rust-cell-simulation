@@ -9,7 +9,7 @@ impl Renderer {
         Self
     }
 
-    pub fn draw(&self, grid: &Grid, camera: &CameraState) {
+    pub fn draw(&self, grid: &Grid, camera: &CameraState, show_lines: bool) {
         clear_background(BLACK);
 
         // Optimisation : On ne dessine que les cellules visibles à l'écran
@@ -53,13 +53,15 @@ impl Renderer {
         }
 
         // Dessiner les bordures de la zone de la simulation
-        draw_rectangle_lines(
-            top_left.x,
-            top_left.y,
-            bottom_right.x - top_left.x,
-            bottom_right.y - top_left.y,
-            2.0,
-            DARKBLUE
-        );
+        if show_lines{
+            draw_rectangle_lines(
+                top_left.x,
+                top_left.y,
+                bottom_right.x - top_left.x,
+                bottom_right.y - top_left.y,
+                2.0,
+                DARKBLUE
+            );
+        }
     }
 }

@@ -3,7 +3,9 @@ use macroquad::window::screen_width;
 use core_sim::Simulator;
 use crate::state::app_state::AppState;
 
-pub fn render_sidebar(ctx: &egui::Context, state: &mut AppState, sim: &Simulator) {
+pub fn render_sidebar(ctx: &egui::Context, state: &mut AppState, sim: &Simulator) -> bool {
+    let mut step_requested = false;
+
     egui::SidePanel::left("controls_panel")
         .max_width(screen_width() / 5.0)
         .min_width(screen_width() / 5.0)
@@ -23,6 +25,7 @@ pub fn render_sidebar(ctx: &egui::Context, state: &mut AppState, sim: &Simulator
                 // Bouton Step seulement si en pause
                 if state.is_paused {
                     if ui.button("⏭ Step").clicked() {
+                        step_requested = true;
                     }
                 }
             });
@@ -51,4 +54,5 @@ pub fn render_sidebar(ctx: &egui::Context, state: &mut AppState, sim: &Simulator
                 ui.label("Espace: Play/Pause");
             });
         });
+    step_requested
 }
