@@ -1,6 +1,9 @@
 [package]
 name = "app_gui"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
+core_sim = { path = "../core_sim"}
+macroquad = "0.4.14"
+egui-macroquad = "0.17.3"

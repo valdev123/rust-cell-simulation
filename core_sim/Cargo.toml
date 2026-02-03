@@ -1,6 +1,9 @@
 [package]
 name = "core_sim"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
+rayon = "1.11.0"       # Parallélisme
+serde = { version = "1.0.228", features = ["derive"] } # Sauvegarde
+rand = "0.9.2"         # Aléatoire
