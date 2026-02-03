@@ -1,4 +1,5 @@
 mod view;
+mod state;
 
 use macroquad::prelude::*;
 use core_sim::{Simulator, ConwayRule, CellState};

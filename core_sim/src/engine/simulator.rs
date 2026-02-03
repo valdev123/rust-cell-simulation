@@ -49,6 +49,10 @@ impl Simulator {
         self.is_a_active = !self.is_a_active;
         self.generation += 1;
     }
+
+    pub fn generation(&self) -> u64 {
+        self.generation
+    }
 }
 
 // === TEST UNITAIRE (LE GLIDER) ===
