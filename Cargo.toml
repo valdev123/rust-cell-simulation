@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "core_sim",
+    "app_gui"
+]
+resolver = "2"
+default-members = ["app_gui"]
