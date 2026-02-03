@@ -89,7 +89,7 @@ async fn main() {
 
         // Draw UI
         egui_macroquad::ui(|ctx| {
-            app_state.is_step_clicked = panels::render_sidebar(ctx, &mut app_state, &simulator);
+            app_state.is_step_clicked = panels::render_sidebar(ctx, &mut app_state, &simulator, &mut camera);
             app_state.is_mouse_captured_by_ui = ctx.wants_pointer_input() || ctx.is_pointer_over_area();
         });
 
