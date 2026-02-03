@@ -8,7 +8,7 @@ pub struct CameraState {
 impl CameraState {
     pub fn new() -> Self {
         Self {
-            zoom: 20.0, // Par défaut, 1 cellule = 20 pixels
+            zoom: 5.01, // Par défaut, 1 cellule = 20 pixels
             offset: vec2(0.0, 0.0),
         }
     }
@@ -56,7 +56,7 @@ impl CameraState {
             // Il faut convertir le delta normalisé en pixels écran
             let delta_pixels = vec2(delta.x * screen_width(), delta.y * screen_height());
 
-            self.offset += delta_pixels;
+            self.offset -= delta_pixels;
         }
     }
 }

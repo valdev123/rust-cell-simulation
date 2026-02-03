@@ -1,2 +1,2 @@
-mod renderer;
-mod camera;
+pub mod renderer;
+pub mod camera;
