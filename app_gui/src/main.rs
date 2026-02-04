@@ -1,10 +1,12 @@
 mod view;
 mod state;
 mod ui;
+mod input;
 
 use macroquad::prelude::*;
 use egui_macroquad::macroquad; // Nécessaire pour le pont
 use core_sim::{Simulator, ConwayRule, CellState};
+use crate::input::mouse::handle_mouse;
 use crate::state::app_state;
 use crate::view::camera::CameraState;
 use crate::view::renderer::Renderer;
@@ -58,24 +60,38 @@ async fn main() {
 
     // --- MAIN LOOP ---
     loop {
-        // Gestion du Temps (Timer logic)
-        // On récupère le temps écoulé depuis la dernière frame (delta time)
+        // ============================================================
+        // 1. INPUT PHASE (UI & Mouse)
+        // ============================================================
+
+        // ou si la souris est capturée.
+        egui_macroquad::ui(|ctx| {
+            panels::render_sidebar(ctx, &mut app_state, &simulator, &mut camera);
+            app_state.is_mouse_captured_by_ui = ctx.wants_pointer_input() || ctx.is_pointer_over_area();
+        });
+
+        // Manage Input Game (Camera & Draw)
+        if !app_state.is_mouse_captured_by_ui {
+            camera.update();
+            handle_mouse(&mut simulator, &camera);
+        }
+
+        // ============================================================
+        // 2. UPDATE PHASE (Logical & Time)
+        // ============================================================
+
         let dt = get_frame_time();
         time_accumulator += dt;
 
         let step_duration = 1.0 / app_state.simulation_speed;
-
-        // Logique de Simulation
         let mut should_step = false;
 
-        // Si Play : on avance selon le timer
         if !app_state.is_paused {
             if time_accumulator >= step_duration {
                 should_step = true;
                 time_accumulator = 0.0;
             }
         }
-        // Si Pause : on avance si Espace est appuyé (coup par coup)
         else if is_key_pressed(KeyCode::Space) || app_state.is_step_clicked {
             should_step = true;
         }
@@ -84,18 +100,11 @@ async fn main() {
             simulator.step();
         }
 
-        // Draw World
+        // ============================================================
+        // 3. RENDER PHASE (Dessin)
+        // ============================================================
+
         renderer.draw(simulator.current_grid(), &camera, app_state.show_grid_lines);
-
-        // Draw UI
-        egui_macroquad::ui(|ctx| {
-            app_state.is_step_clicked = panels::render_sidebar(ctx, &mut app_state, &simulator, &mut camera);
-            app_state.is_mouse_captured_by_ui = ctx.wants_pointer_input() || ctx.is_pointer_over_area();
-        });
-
-        if !app_state.is_mouse_captured_by_ui {
-            camera.update();
-        }
 
         egui_macroquad::draw();
 
