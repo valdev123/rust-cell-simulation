@@ -57,6 +57,8 @@ pub fn render_sidebar(ctx: &egui::Context, state: &mut AppState, sim: &Simulator
 
             ui.separator();
             ui.collapsing("Aide", |ui| {
+                ui.label("Clic Gauche: Dessiner");
+                ui.label("Shift + Clic: Gommer");
                 ui.label("Clic Droit: Déplacer la caméra");
                 ui.label("Molette: Zoomer");
                 ui.label("Espace: Play/Pause");
