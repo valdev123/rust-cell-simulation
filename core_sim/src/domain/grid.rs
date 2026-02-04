@@ -39,4 +39,8 @@ impl Grid {
     pub fn par_iter_mut(&mut self) -> rayon::slice::IterMut<'_, Cell> {
         self.cells.par_iter_mut()
     }
+    
+    pub fn raw_cells(&self) -> &[Cell] {
+        &self.cells
+    }
 }

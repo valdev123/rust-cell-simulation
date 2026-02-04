@@ -18,6 +18,7 @@ fn window_conf() -> Conf {
         window_title: "Rust Cell Simulation".to_owned(),
         window_width: 1920,
         window_height: 1080,
+        sample_count: 0,
         high_dpi: true,
         window_resizable: true,
         ..Default::default()
@@ -31,7 +32,19 @@ async fn main() {
     let grid_size = 100;
     let mut simulator = Simulator::new(grid_size, grid_size, rule);
 
+    // Initialisation Random pour le stress test
+    // On remplit 20% de la grille aléatoirement
+    use ::rand::Rng;
+    let mut rng = ::rand::rng();
+    let grid = simulator.current_grid_mut();
+    for i in 0..(grid_size * grid_size / 5) {
+        let x = rng.random_range(0..grid_size) as i32;
+        let y = rng.random_range(0..grid_size) as i32;
+        grid.set_cell(x, y, CellState::Alive);
+    }
+    
     // Initialisation Glider
+    /*
     {
         let grid = simulator.current_grid_mut();
         grid.set_cell(1, 0, CellState::Alive);
@@ -40,13 +53,14 @@ async fn main() {
         grid.set_cell(1, 2, CellState::Alive);
         grid.set_cell(2, 2, CellState::Alive);
     }
+    */
 
     let mut camera = CameraState::new();
-    let renderer = Renderer::new();
+    let mut renderer = Renderer::new(grid_size, grid_size);
     let mut app_state = AppState::new();
 
     // Centrage Caméra
-    camera.zoom = 9.0;
+    camera.zoom = 5.0;
     let grid_pixel = (grid_size as f32) * camera.zoom;
     let margin_l_pixel = 30.0;
     let margin_t_pixel = 30.0;

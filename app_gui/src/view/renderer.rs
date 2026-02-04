@@ -1,67 +1,95 @@
 use macroquad::prelude::*;
 use core_sim::Grid;
 use crate::view::camera::CameraState;
+use rayon::prelude::*; // INDISPENSABLE pour la vitesse
 
-pub struct Renderer;
+pub struct Renderer {
+    image: Image,
+    texture: Texture2D,
+}
 
 impl Renderer {
-    pub fn new() -> Self {
-        Self
+    pub fn new(width: usize, height: usize) -> Self {
+        let image = Image::gen_image_color(width as u16, height as u16, BLANK);
+        let texture = Texture2D::from_image(&image);
+        texture.set_filter(FilterMode::Nearest); // Pixel Art
+
+        Self { image, texture }
     }
 
-    pub fn draw(&self, grid: &Grid, camera: &CameraState, show_lines: bool) {
+    pub fn draw(&mut self, grid: &Grid, camera: &CameraState, show_lines: bool) {
+        // CALCUL DE LA GÉOMÉTRIE
+        let dest_pos = camera.world_to_screen(0.0, 0.0);
+        let dest_size_w = grid.width() as f32 * camera.zoom;
+        let dest_size_h = grid.height() as f32 * camera.zoom;
+
+        // FOND GLOBAL
         clear_background(BLACK);
 
-        // Optimisation : On ne dessine que les cellules visibles à l'écran
-        // (View Culling simple)
-        let screen_w = screen_width();
-        let screen_h = screen_height();
+        // FOND DE LA GRILLE
+        draw_rectangle(dest_pos.x, dest_pos.y, dest_size_w, dest_size_h, DARKGRAY);
 
-        // Taille visuelle d'une cellule (légèrement réduite pour faire un espace entre elles)
-        let cell_size = camera.zoom;
-        let gap = if camera.zoom > 5.0 { 1.0 } else { 0.0 }; // Pas d'espace si trop dézoomé
-        let draw_size = cell_size - gap;
+        // MISE À JOUR DES PIXELS (CPU -> Mémoire brute en parallèle)
+        let cells = grid.raw_cells();
+        let pixels = &mut self.image.bytes;
 
-        let top_left = camera.world_to_screen(0.0, 0.0);
-        let bottom_right = camera.world_to_screen(grid.width() as f32, grid.height() as f32);
+        cells.par_iter()
+            .zip(pixels.par_chunks_exact_mut(4)) // 4 octets par pixel (R, G, B, A)
+            .for_each(|(cell, pixel)| {
+                if cell.is_alive() {
+                    // Si vivant : BLANC
+                    pixel[0] = 255;
+                    pixel[1] = 255;
+                    pixel[2] = 255;
+                    pixel[3] = 255;
+                } else {
+                    // Si mort : TRANSPARENT
+                    pixel[3] = 0;
+                }
+            });
 
-        draw_rectangle(
-            top_left.x,
-            top_left.y,
-            bottom_right.x - top_left.x,
-            bottom_right.y - top_left.y,
-            DARKGRAY
+        // UPLOAD VERS GPU
+        self.texture.update(&self.image);
+
+        // DESSIN DE LA TEXTURE (GPU)
+        draw_texture_ex(
+            &self.texture,
+            dest_pos.x,
+            dest_pos.y,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(vec2(dest_size_w, dest_size_h)),
+                ..Default::default()
+            },
         );
 
-        // On itère sur toutes les cellules
-        for y in 0..grid.height() {
-            for x in 0..grid.width() {
-                if let Some(cell) = grid.get_cell(x as i32, y as i32) {
-                    if cell.is_alive() {
-                        let pos = camera.world_to_screen(x as f32, y as f32);
+        // LIGNES DE LA GRILLE
+        if show_lines && camera.zoom > 5.01 {
+            self.draw_grid_lines(grid, camera, dest_pos, dest_size_w, dest_size_h);
+        } else {
+            draw_rectangle_lines(dest_pos.x, dest_pos.y, dest_size_w, dest_size_h, 2.0, BLUE);
+        }
+    }
 
-                        // Si la cellule est hors de l'écran, on skip (culling basique)
-                        if pos.x + cell_size < 0.0 || pos.x > screen_w ||
-                            pos.y + cell_size < 0.0 || pos.y > screen_h {
-                            continue;
-                        }
+    fn draw_grid_lines(&self, grid: &Grid, camera: &CameraState, start_pos: Vec2, total_w: f32, total_h: f32) {
+        let color = Color::new(0.5, 0.5, 0.5, 0.2); // Gris transparent
 
-                        draw_rectangle(pos.x, pos.y, draw_size, draw_size, WHITE);
-                    }
-                }
+        // Lignes verticales
+        for x in 0..=grid.width() {
+            let x_pos = start_pos.x + (x as f32 * camera.zoom);
+            // Culling simple : on ne dessine pas si hors écran
+            if x_pos >= 0.0 && x_pos <= screen_width() {
+                draw_line(x_pos, start_pos.y, x_pos, start_pos.y + total_h, 1.0, color);
             }
         }
 
-        // Dessiner les bordures de la zone de la simulation
-        if show_lines{
-            draw_rectangle_lines(
-                top_left.x,
-                top_left.y,
-                bottom_right.x - top_left.x,
-                bottom_right.y - top_left.y,
-                2.0,
-                DARKBLUE
-            );
+        // Lignes horizontales
+        for y in 0..=grid.height() {
+            let y_pos = start_pos.y + (y as f32 * camera.zoom);
+            // Culling simple
+            if y_pos >= 0.0 && y_pos <= screen_height() {
+                draw_line(start_pos.x, y_pos, start_pos.x + total_w, y_pos, 1.0, color);
+            }
         }
     }
 }

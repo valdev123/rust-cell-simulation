@@ -49,6 +49,8 @@ dependencies = [
  "core_sim",
  "egui-macroquad",
  "macroquad",
+ "rand",
+ "rayon",
 ]
 
 [[package]]
