@@ -7,7 +7,6 @@ use macroquad::prelude::*;
 use egui_macroquad::macroquad; // Nécessaire pour le pont
 use core_sim::{Simulator, ConwayRule, CellState};
 use crate::input::mouse::handle_mouse;
-use crate::state::app_state;
 use crate::view::camera::CameraState;
 use crate::view::renderer::Renderer;
 use crate::state::app_state::AppState;
@@ -29,18 +28,21 @@ fn window_conf() -> Conf {
 async fn main() {
     // --- SETUP ---
     let rule = Box::new(ConwayRule);
-    let grid_size = 100;
+    let grid_size = 500;
     let mut simulator = Simulator::new(grid_size, grid_size, rule);
 
     // Initialisation Random pour le stress test
     // On remplit 20% de la grille aléatoirement
-    use ::rand::Rng;
-    let mut rng = ::rand::rng();
-    let grid = simulator.current_grid_mut();
-    for i in 0..(grid_size * grid_size / 5) {
-        let x = rng.random_range(0..grid_size) as i32;
-        let y = rng.random_range(0..grid_size) as i32;
-        grid.set_cell(x, y, CellState::Alive);
+    {
+        let grid = simulator.current_grid_mut();
+        let total_cells = grid_size * grid_size;
+
+        for _ in 0..(total_cells / 5) {
+            let x = fastrand::usize(0..grid_size) as i32;
+            let y = fastrand::usize(0..grid_size) as i32;
+
+            grid.set_cell(x, y, CellState::Alive);
+        }
     }
     
     // Initialisation Glider
@@ -60,8 +62,8 @@ async fn main() {
     let mut app_state = AppState::new();
 
     // Centrage Caméra
-    camera.zoom = 5.0;
-    let grid_pixel = (grid_size as f32) * camera.zoom;
+    camera.zoom = 2.0;
+    // let grid_pixel = (grid_size as f32) * camera.zoom;
     let margin_l_pixel = 30.0;
     let margin_t_pixel = 30.0;
     camera.offset = vec2(
